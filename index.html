@@ -7,7 +7,12 @@
   <title>ISO Printer</title>
 </head>
 <body>
-  <input id="fileInput" type="file">
+  <p>Choose a local file</p>
+  <input id="localFile" type="file">
+  <p>or load from remote URL</p>
+  <input id="remoteFile" type="text">
+  <button id="loadRemoteFileBtn">Load file</button>
+  <p id="logBoard" style="width: 600px;word-wrap: break-word"></p>
 </body>
 <script src="index.js"></script>
 </html>
