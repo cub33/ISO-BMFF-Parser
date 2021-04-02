@@ -2,7 +2,7 @@ const logBoardDom = document.querySelector("#logBoard")
 const log = content => { logBoardDom.innerHTML += content+',' }
 
 const bufToStr = buffer => 
-  String.fromCharCode.apply(null, new Uint32Array(buffer))
+  String.fromCharCode.apply(null, new Uint8Array(buffer))
 
 const bufToInt = buffer => new DataView(buffer).getUint32()
 
@@ -51,6 +51,21 @@ const extractBoxes = (arraybuffer) => {
       extractBoxes(box.content)
     }
 
+    // display mdat content on the page
+    if (box.type === 'mdat') {
+      const mdatContent = bufToStr(box.content)
+      const xmlParser = new DOMParser()
+      const xmlContent = xmlParser.parseFromString(mdatContent, "text/xml")
+      const smpteImages = xmlContent.getElementsByTagName("smpte:image")
+      for (const img of smpteImages) {
+        const base64Img = img.childNodes[0].nodeValue
+        const imgDom = document.createElement("img")
+        imgDom.src = 'data:image/png;base64, ' + base64Img
+        document.querySelector("#mdat-content-div").appendChild(imgDom)
+        
+      }
+    }
+
   }
 }
 
@@ -58,9 +73,9 @@ const extractBoxFrom = arraybuffer => {
   const uint8array = new Uint8Array(arraybuffer)
   const size = bufToInt(arraybuffer.slice(0, 4))
   const type = bufToStr(uint8array.slice(4, 4+4))
+  const content = arraybuffer.slice(4+4, size)
   log(type)
   log(size)
-  const content = arraybuffer.slice(4+4, size)
   log(content)
   return { size, type, content }
 }
