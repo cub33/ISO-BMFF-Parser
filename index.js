@@ -1,5 +1,24 @@
 const logBoardDom = document.querySelector("#logBoard")
-const log = content => { logBoardDom.innerHTML += content+',' }
+const log = content => { logBoardDom.innerHTML += content }
+
+const printBoxes = boxes => {
+  boxes.forEach(box => {
+    log(`<br>Found box of type <b>${box.type}</b> with size of <b>${box.size}</b> bytes`)
+    if (box.type === 'mdat') {
+      log('<br><br>mdat content:')
+      const mdatContent = bufToStr(box.content)
+      const xmlParser = new DOMParser()
+      const xmlContent = xmlParser.parseFromString(mdatContent, "text/xml")
+      const smpteImages = xmlContent.getElementsByTagName("smpte:image")
+      for (const img of smpteImages) {
+        const base64Img = img.childNodes[0].nodeValue
+        const imgDom = document.createElement("img")
+        imgDom.src = 'data:image/png;base64, ' + base64Img
+        document.querySelector("#mdat-content-div").appendChild(imgDom) 
+      }
+    }
+  })
+}
 
 const bufToStr = buffer => 
   String.fromCharCode.apply(null, new Uint8Array(buffer))
@@ -24,6 +43,7 @@ const readFileRemote = () => {
   fetch(url)
     .then(response => response.arrayBuffer())
     .then(extractBoxes)
+    .then(printBoxes)
     .catch(e => console.log('error while loading remote file =>', e))
 }
 
@@ -31,42 +51,21 @@ let boxes = []
 const extractBoxes = (arraybuffer) => {
   let i = 0
   const uint8array = new Uint8Array(arraybuffer)
-  console.log("extractBoxes -> uint8array", uint8array)
+
   while (i < uint8array.length) {
-    console.log('i =>', i)
     const box = extractBoxFrom(arraybuffer)
-    console.log("extractBoxes -> box", box)
     boxes.push(box)
-    console.log("extractBoxes -> boxes", boxes)
     
     i += box.size
-    console.log('i after adding box.size =>', i)
-    
-    console.log("arraybuffer before slicing", arraybuffer)
     arraybuffer = arraybuffer.slice(i)
-    console.log("arraybuffer after slicing", arraybuffer)
 
     if (box.type === 'moof' || box.type === 'traf') {
       i += 4 + 4
       extractBoxes(box.content)
     }
 
-    // display mdat content on the page
-    if (box.type === 'mdat') {
-      const mdatContent = bufToStr(box.content)
-      const xmlParser = new DOMParser()
-      const xmlContent = xmlParser.parseFromString(mdatContent, "text/xml")
-      const smpteImages = xmlContent.getElementsByTagName("smpte:image")
-      for (const img of smpteImages) {
-        const base64Img = img.childNodes[0].nodeValue
-        const imgDom = document.createElement("img")
-        imgDom.src = 'data:image/png;base64, ' + base64Img
-        document.querySelector("#mdat-content-div").appendChild(imgDom)
-        
-      }
-    }
-
   }
+  return boxes
 }
 
 const extractBoxFrom = arraybuffer => {
@@ -74,9 +73,6 @@ const extractBoxFrom = arraybuffer => {
   const size = bufToInt(arraybuffer.slice(0, 4))
   const type = bufToStr(uint8array.slice(4, 4+4))
   const content = arraybuffer.slice(4+4, size)
-  log(type)
-  log(size)
-  log(content)
   return { size, type, content }
 }
 
