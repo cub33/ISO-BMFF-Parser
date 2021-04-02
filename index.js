@@ -49,18 +49,19 @@ const readFileRemote = () => {
 
 let boxes = []
 const extractBoxes = (arraybuffer) => {
-  let i = 0
+  let cursor = 0
   const uint8array = new Uint8Array(arraybuffer)
 
-  while (i < uint8array.length) {
+  while (cursor < uint8array.length) {
     const box = extractBoxFrom(arraybuffer)
     boxes.push(box)
     
-    i += box.size
-    arraybuffer = arraybuffer.slice(i)
+    /* cut off readed content */
+    cursor += box.size
+    arraybuffer = arraybuffer.slice(cursor)
 
     if (box.type === 'moof' || box.type === 'traf') {
-      i += 4 + 4
+      cursor += 4 + 4 // skip header and size
       extractBoxes(box.content)
     }
 
