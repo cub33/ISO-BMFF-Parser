@@ -30,8 +30,8 @@ const readFile = e => {
   let reader = new FileReader()
 
   reader.onload = function(e) {
-      let arrayBuffer = new Uint8Array(reader.result)
-      console.log(arrayBuffer)
+      const boxes = extractBoxes(reader.result)
+      printBoxes(boxes)
   }
 
   reader.readAsArrayBuffer(file)
