@@ -30,8 +30,8 @@ const readFile = e => {
   let reader = new FileReader()
 
   reader.onload = function(e) {
-      const boxes = extractBoxes(reader.result)
-      printBoxes(boxes)
+    const boxes = extractBoxes(reader.result)
+    printBoxes(boxes)
   }
 
   reader.readAsArrayBuffer(file)
@@ -56,12 +56,11 @@ const extractBoxes = (arraybuffer) => {
     const box = extractBoxFrom(arraybuffer)
     boxes.push(box)
     
-    /* cut off readed content */
+    /* cut off parsed content */
     cursor += box.size
-    arraybuffer = arraybuffer.slice(cursor)
+    arraybuffer = arraybuffer.slice(box.size)
 
     if (box.type === 'moof' || box.type === 'traf') {
-      cursor += 4 + 4 // skip header and size
       extractBoxes(box.content)
     }
 
